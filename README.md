@@ -267,6 +267,8 @@ ORDER BY product, market_revenue
 ;
 ```
 
+Unfortunately it looks like `QUALIFY` is only available in the big data warehouses (Snowflake, Amazon Redshift, Google BigQuery) but I had to include this because it's so useful.
+
 ### You can (but shouldn't always) `GROUP BY` column position
 
 Instead of using the column name, you can `GROUP BY` or `ORDER BY` using the
