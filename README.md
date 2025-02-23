@@ -62,7 +62,11 @@ FROM employees
 Use a dummy value in the `WHERE` clause so you can easily comment out conditions when testing or tweaking a query.
 
 ```SQL
--- If I want to comment out the job condition the following query will break.
+/*
+If I want to comment out the job
+condition the following query
+will break:
+*/
 SELECT *
 FROM employees
 WHERE
@@ -70,7 +74,11 @@ WHERE
 AND dept_no != 5
 ;
 
--- With a dummy value there's no issue. I can comment out all the conditions and 1=1 will ensure the query still runs.
+/*
+With a dummy value there's no issue.
+I can comment out all the conditions
+and 1=1 will ensure the query still runs:
+*/
 SELECT *
 FROM employees
 WHERE 1=1
@@ -117,10 +125,6 @@ consider using common table expressions, which can help you keep your code more 
 
 ```SQL
 /*
-The following query doesn't actually need to use an inline view or CTE but I'm just
-demonstrating the difference between the two.
-*/
-
 -- Using nested inline views.
 SELECT 
 vhs.movie
@@ -343,12 +347,17 @@ If no rows are returned the tables are identical - otherwise, what's returned ar
 
 ```SQL
 /* 
-The first query will return rows from employees that aren't present in department.
+The first query will return rows from
+employees that aren't present in
+department.
 
-The second query will return rows from department that aren't present in employees.
+The second query will return rows from
+department that aren't present in employees.
 
-The UNION ALL will ensure that the final result set returned combines these all 
-of these rows so you know which rows are causing the difference.
+The UNION ALL will ensure that the
+final result set returned combines
+these all of these rows so you know
+which rows are causing the difference.
 */
 (
 SELECT 
@@ -423,7 +432,11 @@ VALUES
     ('Robot', 150),
     ('Alien', 90);
 
--- The window function will rank the 'Robot' product as 1 when it should be 3.
+/*
+The window function will rank
+the 'Robot' product as 1 when
+it should be 3
+*/
 SELECT 
 product
 , CASE product WHEN 'Robot' THEN 0 ELSE revenue END AS revenue
@@ -431,7 +444,9 @@ product
 FROM products
 ;
 
--- You can instead do this:
+/*
+You can instead do this:
+*/
 SELECT 
 product
 , CASE product WHEN 'Robot' THEN 0 ELSE revenue END AS revenue
