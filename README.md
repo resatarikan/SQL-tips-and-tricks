@@ -124,8 +124,7 @@ If you find yourself nesting inline views more than 2 or 3 levels deep,
 consider using common table expressions, which can help you keep your code more organised and readable.
 
 ```SQL
-/*
--- Using nested inline views.
+-- Using inline views:
 SELECT 
 vhs.movie
 , vhs.vhs_revenue
@@ -150,7 +149,7 @@ FROM
         ON cs.movie_id = vhs.movie_id
 ;
 
--- Using CTEs.
+-- Using CTEs:
 WITH cinema_sales AS 
     (
         SELECT 
@@ -397,7 +396,7 @@ FROM employees
 INSERT INTO departments (id)
 VALUES (1), (2), (NULL);
 
--- Doesn't work due to NULL being present.
+-- Doesn't work due to NULL:
 SELECT * 
 FROM employees 
 WHERE department_id NOT IN (SELECT DISTINCT id from departments)
@@ -513,8 +512,8 @@ out why something isn't working the way you expected:
 /*
 If I'd read the documentation
 further I'd also have realised
-that my solution to the NULL problem
-with GREATEST()... 
+that my solution to the NULL
+problem with GREATEST()... 
 */
 
 SELECT COALESCE(GREATEST(signup_date, consumption_date), signup_date, consumption_date);
