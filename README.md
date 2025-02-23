@@ -200,7 +200,7 @@ SELECT
 video_id
 FROM video_content
 WHERE 1=1
-AND series_id NOT IN (SELECT video_id FROM archive) -- Be mindful of NULL values.
+AND video_id NOT IN (SELECT video_id FROM archive) -- Be mindful of NULL values.
 
 -- Using NOT EXISTS/correlated subquery:
 SELECT 
@@ -229,8 +229,8 @@ Aside from being slow, using `NOT IN` will not work as intended if there is a `N
 
 ### Use `QUALIFY` to filter window functions
 
-`QUALIFY` lets you filter the results of a query based on a window function. This is useful for a variety of reasons, including to
-reduce the number of lines of code needed.
+`QUALIFY` lets you filter the results of a query based on a window function, meaning you don't need
+to use an inline view to filter your result set and thus reducing the number of lines of code needed.
 
 For example, if I want to return the top 10 markets per product I can use
 `QUALIFY` rather than an inline view:
@@ -309,7 +309,10 @@ ORDER BY dept_salary -- Be sure to order by this column to ensure the Total appe
 `EXCEPT` returns rows from the first query's result set that don't appear in the second query's result set.
 
 ```SQL
--- Miles Davis will be returned from this query.
+/*
+Miles Davis will be returned from
+this query
+*/
 SELECT artist_name
 FROM artist
 WHERE artist_name = 'Miles Davis'
@@ -319,7 +322,11 @@ FROM artist
 WHERE artist_name = 'Nirvana'
 ;
 
--- Nothing will be returned from this query as 'Miles Davis' appears in both queries' result sets.
+/*
+Nothing will be returned from this
+query as 'Miles Davis' appears in
+both queries' result sets.
+*/
 SELECT artist_name
 FROM artist
 WHERE artist_name = 'Miles Davis'
@@ -470,9 +477,9 @@ SELECT
 video_content.*
 FROM video_content
     LEFT JOIN archive -- New CMS cannot process archive video formats. 
-    ON video_content.series_id = archive.series_id
+    ON video_content.video_id = archive.video_id
 WHERE 1=1
-AND archive.series_id IS NULL
+AND archive.video_id IS NULL
 ;
 ```
 
@@ -488,12 +495,19 @@ the documentation and it will save you the headache of having to work
 out why something isn't working the way you expected:
 
 ```SQL
--- If I'd read the documentation further I'd also have realised that my solution
---to the NULL problem with GREATEST()...
+/*
+If I'd read the documentation
+further I'd also have realised
+that my solution to the NULL problem
+with GREATEST()... 
+*/
 
 SELECT COALESCE(GREATEST(signup_date, consumption_date), signup_date, consumption_date);
 
--- ... could have been solved with the following function:
+/*
+... could have been solved with the
+following function:
+*/
 SELECT GREATEST_IGNORE_NULLS(signup_date, consumption_date);
 ```
 
