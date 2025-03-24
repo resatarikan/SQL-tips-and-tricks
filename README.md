@@ -30,11 +30,12 @@ Please note that some of these tips might not be relevant for all RDBMs.
 
 11) [Be aware of how `NOT IN` behaves with `NULL` values](#be-aware-of-how-not-in-behaves-with-null-values)
 12) [Avoid ambiguity when naming calculated fields](#avoid-ambiguity-when-naming-calculated-fields)
-13) [Always specify which column belongs to which table](#always-specify-which-column-belongs-to-which-table)
-14) [Understand the order of execution](#understand-the-order-of-execution)
-15) [Comment your code!](#comment-your-code)
-16) [Read the documentation (in full)](#read-the-documentation-in-full)
-17) [Use descriptive names for your saved queries](#use-descriptive-names-for-your-saved-queries)
+13) [Implicit casting will slow down (or break) your query](#implicit-casting-will-slow-down-or-break-your-query)
+14) [Always specify which column belongs to which table](#always-specify-which-column-belongs-to-which-table)
+15) [Understand the order of execution](#understand-the-order-of-execution)
+16) [Comment your code!](#comment-your-code)
+17) [Read the documentation (in full)](#read-the-documentation-in-full)
+18) [Use descriptive names for your saved queries](#use-descriptive-names-for-your-saved-queries)
 
 
 ## Formatting/readability
@@ -56,7 +57,9 @@ FROM employees
 ;
 ```
 
-- Also use a leading `AND` in the `WHERE` clause, for the same reasons (following tip demonstrates this). 
+- Also use a leading `AND` in the `WHERE` clause, for the same reasons (following tip demonstrates this).
+
+-----
 
 ### **Use a dummy value in the WHERE clause**
 Use a dummy value in the `WHERE` clause so you can easily comment out conditions when testing or tweaking a query.
@@ -87,6 +90,8 @@ AND dept_no != 5
 ;
 ```
 
+-----
+
 ### Indent your code
 Indent your code to make it more readable to colleagues and your future self.
 
@@ -115,6 +120,7 @@ INNER JOIN metadata
 	ON video_content.video_id = metadata.video_id
 ;
 ```
+-----
 
 ### Consider CTEs when writing complex queries
 For longer than I'd care to admit I would nest inline views, which would lead to
@@ -220,6 +226,7 @@ AND NOT EXISTS (
 
 Note that I advise against using `NOT IN` - see the following tip.
 
+-----
 ### `NOT EXISTS` is faster than `NOT IN` if your column allows `NULL`
 
 If you're using an anti-join with `NOT IN` you'll likely find it's slower than using `NOT EXISTS`, if the values/column you're comparing against allows `NULL`.
@@ -230,6 +237,7 @@ I've experienced this when using Snowflake and the PostgreSQL Wiki explicity [ca
 
 Aside from being slow, using `NOT IN` will not work as intended if there is a `NULL` in the values being compared against - see [tip 11](#be-aware-of-how-not-in-behaves-with-null-values).
 
+-----
 ### Use `QUALIFY` to filter window functions
 
 `QUALIFY` lets you filter the results of a query based on a window function, meaning you don't need
@@ -272,6 +280,7 @@ ORDER BY product, market_revenue
 
 Unfortunately it looks like `QUALIFY` is only available in the big data warehouses (Snowflake, Amazon Redshift, Google BigQuery) but I had to include this because it's so useful.
 
+-----
 ### You can (but shouldn't always) `GROUP BY` column position
 
 Instead of using the column name, you can `GROUP BY` or `ORDER BY` using the
@@ -290,6 +299,7 @@ ORDER BY 2 DESC
 ;
 ```
 
+-----
 ### You can create a grand total with `GROUP BY ROLLUP`
 Creating a grand total (or sub-totals) is possible thanks to `GROUP BY ROLLUP`.
 
@@ -307,6 +317,7 @@ ORDER BY dept_salary -- Be sure to order by this column to ensure the Total appe
 ;
 ```
 
+-----
 ### Use `EXCEPT` to find the difference between two tables
 
 `EXCEPT` returns rows from the first query's result set that don't appear in the second query's result set.
@@ -413,6 +424,7 @@ WHERE NOT EXISTS (
 ;
 ```
 
+-----
 ### Avoid ambiguity when naming calculated fields
 
 When creating a calculated field, you might be tempted to name it the same as an existing column, but this can lead to unexpected behaviour, such as a 
@@ -455,6 +467,39 @@ FROM products
 
 ```
 
+-----
+### Implicit casting will slow down (or break) your query
+
+If you specify a value with a different data type than a column's, your database may automatically (implicitly) convert the value.
+
+For example, let's say the `video_id` column has a string data type and you specify an integer in the `WHERE` clause:
+
+```SQL
+SELECT video_name
+FROM video_content 
+ -- Behind the scenes the database will implicitly attempt to convert the video_id column to an integer:
+WHERE video_id = 200050
+```
+
+There's a couple of problems with relying on implicit casting:
+
+1) An error may be thrown if the implicit conversion isn't possible - for example, if one of the video IDs has a string value of _'abc2000'_
+
+2) \*Your query will likely be slower, due to the additional work of converting each value to the specified data type.
+
+Instead, use the same data type as the column you're operating on (`WHERE video_ID = '200050'`) or, to avoid errors, use a function like [`TRY_TO_NUMBER`](https://docs.snowflake.com/en/sql-reference/functions/try_to_decimal) that 
+will attempt the conversion but handle any errors:
+
+```SQL
+SELECT video_name
+FROM video_content 
+ -- This won't result in an error:
+WHERE TRY_TO_NUMBER(video_id) = 200050
+```
+
+\* Note that this depends on the size of the dataset being operated on. 
+
+-----
 ### Always specify which column belongs to which table
 
 When you have complex queries with multiple joins, it pays to be able to 
@@ -475,11 +520,12 @@ FROM video_content AS vc
 ;
 ```
 
+-----
 ### Understand the order of execution
 If I had to give one piece of advice to someone learning SQL, it'd be to understand the order of 
 execution (of clauses). It will completely change how you write queries. This [blog post](https://blog.jooq.org/a-beginners-guide-to-the-true-order-of-sql-operations/) is a fantastic resource for learning.
 
-
+-----
 ### Comment your code!
 While in the moment you know why you did something, if you revisit
 the code weeks, months or years later you might not remember.
@@ -497,6 +543,7 @@ AND archive.video_id IS NULL
 ;
 ```
 
+-----
 ### Read the documentation (in full)
 Using Snowflake I once needed to return the latest date from a list of columns 
 and so I decided to use `GREATEST()`.
@@ -525,6 +572,7 @@ following function:
 SELECT GREATEST_IGNORE_NULLS(signup_date, consumption_date);
 ```
 
+-----
 ### Use descriptive names for your saved queries
 
 There's almost nothing worse than not being able to find a query you need to re-run/refer back to.
