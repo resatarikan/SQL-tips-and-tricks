@@ -427,8 +427,13 @@ WHERE NOT EXISTS (
 -----
 ### Avoid ambiguity when naming calculated fields
 
-When creating a calculated field, you might be tempted to name it the same as an existing column, but this can lead to unexpected behaviour, such as a 
-window function operating on the wrong field.
+When creating a calculated field, naming it the same as an existing column can lead to unexpected behaviour.
+
+Note [Snowflake's documentation](https://docs.snowflake.com/en/sql-reference/constructs/group-by) on the topic:
+
+*"If a GROUP BY clause contains a name that matches both a column name and an alias, then the GROUP BY clause uses the column name."*
+
+For example you might expect the following to return 2 rows but what's actually returned is 3 rows:
 
 ```SQL
 CREATE TABLE products (
@@ -441,12 +446,60 @@ INSERT INTO products (product, revenue)
 VALUES 
     ('Shark', 100),
     ('Robot', 150),
-    ('Alien', 90);
+    ('Racecar', 90);
 
+SELECT 
+LEFT(product, 1) AS product -- Returns the first letter of the product value.
+, MAX(revenue) as max_revenue
+FROM products
+GROUP BY product
+;
+```
+
+|PRODUCT|MAX_REVENUE|
+|-------|------------|
+|S|100|
+|R|150|
+|R|90|
+
+What's happened is that the `LEFT` function has been applied after the product column has been 
+grouped and aggregation applied.
+
+The solution is to use a unique alias or be more explicit in the `GROUP BY` clause: 
+
+```SQL
+-- Solution option 1:
+SELECT 
+LEFT(product, 1) AS product_letter
+, MAX(revenue) AS max_revenue
+FROM products
+GROUP BY product_letter
+;
+
+-- Solution option 2:
+SELECT 
+LEFT(product, 1) AS product,
+, MAX(revenue) AS max_revenue
+FROM products
+GROUP BY LEFT(product, 1)
+;
+```
+
+Result:
+
+|PRODUCT_LETTER|MAX_REVENUE|
+|--------------|-----------|
+|S|100|
+|R|150|
+
+
+Assigning an alias to a calculated field can also be problematic when it comes to window functions.
+
+In this example the the `CASE` statement is being applied AFTER the window function has executed:
+
+```SQL
 /*
-The window function will rank
-the 'Robot' product as 1 when
-it should be 3
+The window function will rank the 'Robot' product as 1 when it should be 3.
 */
 SELECT 
 product
@@ -454,18 +507,31 @@ product
 , RANK() OVER (ORDER BY revenue DESC)
 FROM products
 ;
+```
 
+Our earlier solutions apply:
+
+```SQL
 /*
-You can instead do this:
+Solution option 1 (note this might not work in all RDBMS, in which case use the other soluton):
 */
+SELECT 
+product
+, CASE product WHEN 'Robot' THEN 0 ELSE revenue END AS updated_revenue
+, RANK() OVER (ORDER BY updated_revenue DESC)
+FROM products
+;
+
+-- Solution option 2:
 SELECT 
 product
 , CASE product WHEN 'Robot' THEN 0 ELSE revenue END AS revenue
 , RANK() OVER (ORDER BY CASE product WHEN 'Robot' THEN 0 ELSE revenue END DESC)
 FROM products
 ;
-
 ```
+
+My advice - use a unique alias when possible to avoid confusion.
 
 -----
 ### Implicit casting will slow down (or break) your query
