@@ -229,13 +229,17 @@ Note that I advise against using `NOT IN` - see the following tip.
 -----
 ### `NOT EXISTS` is faster than `NOT IN` if your column allows `NULL`
 
-If you're using an anti-join with `NOT IN` you'll likely find it's slower than using `NOT EXISTS`, if the values/column you're comparing against allows `NULL`.
+`NOT IN` is usually slower than using `NOT EXISTS`, if the values/column you're comparing against allows `NULL`.
 
 I've experienced this when using Snowflake and the PostgreSQL Wiki explicity [calls this out](https://wiki.postgresql.org/wiki/Don't_Do_This#Don.27t_use_NOT_IN):
 
 *"...NOT IN (SELECT ...) does not optimize very well."*
 
 Aside from being slow, using `NOT IN` will not work as intended if there is a `NULL` in the values being compared against - see [tip 11](#be-aware-of-how-not-in-behaves-with-null-values).
+
+Why include this tip if `NOT IN` doesn't work with `NULL` values anyway?
+
+Well just because a column allows `NULL` values does not mean there **are** any `NULL` values present and if you're working with a table that you cannot alter you'll want to use `NOT EXISTS` to speed up your query.
 
 -----
 ### Use `QUALIFY` to filter window functions
