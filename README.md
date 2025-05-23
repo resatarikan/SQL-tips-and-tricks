@@ -15,29 +15,36 @@ Please note that some of these tips might not be relevant for all RDBMs.
 
 ### Formatting/readability
 
-1) [Use a leading comma to separate fields](#use-a-leading-comma-to-separate-fields)
-2) [Use a dummy value in the WHERE clause](#use-a-dummy-value-in-the-where-clause)
-3) [Indent your code](#indent-your-code)
-4) [Consider CTEs when writing complex queries](#consider-ctes-when-writing-complex-queries)
+- [Use a leading comma to separate fields](#use-a-leading-comma-to-separate-fields)
+-  [Use a dummy value in the `WHERE` clause](#use-a-dummy-value-in-the-where-clause)
+- [Indent your code](#indent-your-code)
+- [Consider CTEs when writing complex queries](#consider-ctes-when-writing-complex-queries)
+- [Comment your code](#comment-your-code)
 
-### Useful features
-5) [Anti-joins will return rows from one table that have no match in another table](#anti-joins-will-return-rows-from-one-table-that-have-no-match-in-another-table)
-6) [`NOT EXISTS` is faster than `NOT IN` if your column allows `NULL`](#not-exists-is-faster-than-not-in-if-your-column-allows-null)
-7) [Use `QUALIFY` to filter window functions](#use-qualify-to-filter-window-functions)
-8) [You can (but shouldn't always) `GROUP BY` column position](#you-can-but-shouldnt-always-group-by-column-position)
-9) [You can create a grand total with `GROUP BY ROLLUP`](#you-can-create-a-grand-total-with-group-by-rollup)
-10) [Use `EXCEPT` to find the difference between two tables](#use-except-to-find-the-difference-between-two-tables)
 
-### Avoid pitfalls
+### Data wrangling
+- [Anti-joins will return rows from one table that have no match in another table](#anti-joins-will-return-rows-from-one-table-that-have-no-match-in-another-table)
+- [Use `QUALIFY` to filter window functions](#use-qualify-to-filter-window-functions)
+- [You can (but shouldn't always) `GROUP BY` column position](#you-can-but-shouldnt-always-group-by-column-position)
+- [Create a grand total with `GROUP BY ROLLUP`](#create-a-grand-total-with-group-by-rollup)
+- [Use `EXCEPT` to find the difference between two tables](#use-except-to-find-the-difference-between-two-tables)
 
-11) [Be aware of how `NOT IN` behaves with `NULL` values](#be-aware-of-how-not-in-behaves-with-null-values)
-12) [Avoid ambiguity when naming calculated fields](#avoid-ambiguity-when-naming-calculated-fields)
-13) [Implicit casting will slow down (or break) your query](#implicit-casting-will-slow-down-or-break-your-query)
-14) [Always specify which column belongs to which table](#always-specify-which-column-belongs-to-which-table)
-15) [Understand the order of execution](#understand-the-order-of-execution)
-16) [Comment your code!](#comment-your-code)
-17) [Read the documentation (in full)](#read-the-documentation-in-full)
-18) [Use descriptive names for your saved queries](#use-descriptive-names-for-your-saved-queries)
+### Performance
+
+- [`NOT EXISTS` is faster than `NOT IN` if your column allows `NULL`](#not-exists-is-faster-than-not-in-if-your-column-allows-null)
+- [Implicit casting will slow down (or break) your query](#implicit-casting-will-slow-down-or-break-your-query)
+
+### Common mistakes
+
+- [Be aware of how `NOT IN` behaves with `NULL` values](#be-aware-of-how-not-in-behaves-with-null-values)
+- [Avoid ambiguity when naming calculated fields](#avoid-ambiguity-when-naming-calculated-fields)
+- [Always specify which column belongs to which table](#always-specify-which-column-belongs-to-which-table)
+
+### Miscellaneous
+
+- [Understand the order of execution](#understand-the-order-of-execution)
+- [Read the documentation (in full)](#read-the-documentation-in-full)
+- [Use descriptive names for your saved queries](#use-descriptive-names-for-your-saved-queries)
 
 
 ## Formatting/readability
@@ -185,7 +192,28 @@ FROM cinema_sales AS cs
 ;
 ```
 
-## Useful features 
+-----
+### Comment your code
+While in the moment you know why you did something, if you revisit
+the code weeks, months or years later you might not remember.
+
+In general you should strive to write comments that explain why you did something, not how.
+
+Your colleagues and future self will thank you!
+
+```SQL
+SELECT 
+video_content.*
+FROM video_content
+    LEFT JOIN archive
+    ON video_content.video_id = archive.video_id
+WHERE 1=1
+-- Need to filter out as new CMS cannot process archive video formats:
+AND archive.video_id IS NULL
+;
+```
+
+## Data wrangling
 
 ### Anti-joins will return rows from one table that have no match in another table
 
@@ -226,22 +254,7 @@ AND NOT EXISTS (
 
 ```
 
-Note that I advise against using `NOT IN` - see the following tip.
-
------
-### `NOT EXISTS` is faster than `NOT IN` if your column allows `NULL`
-
-`NOT IN` is usually slower than using `NOT EXISTS`, if the values/column you're comparing against allows `NULL`.
-
-I've experienced this when using Snowflake and the PostgreSQL Wiki explicity [calls this out](https://wiki.postgresql.org/wiki/Don't_Do_This#Don.27t_use_NOT_IN):
-
-*"...NOT IN (SELECT ...) does not optimize very well."*
-
-Aside from being slow, using `NOT IN` will not work as intended if there is a `NULL` in the values being compared against - see [tip 11](#be-aware-of-how-not-in-behaves-with-null-values).
-
-Why include this tip if `NOT IN` doesn't work with `NULL` values anyway?
-
-Well just because a column allows `NULL` values does not mean there **are** any `NULL` values present and if you're working with a table that you cannot alter you'll want to use `NOT EXISTS` to speed up your query.
+Note that I advise against using `NOT IN` - see [this tip](#be-aware-of-how-not-in-behaves-with-null-values).
 
 -----
 ### Use `QUALIFY` to filter window functions
@@ -306,7 +319,7 @@ ORDER BY 2 DESC
 ```
 
 -----
-### You can create a grand total with `GROUP BY ROLLUP`
+### Create a grand total with `GROUP BY ROLLUP`
 Creating a grand total (or sub-totals) is possible thanks to `GROUP BY ROLLUP`.
 
 For example, if you've aggregated a company's employees salary per department you 
@@ -402,7 +415,56 @@ FROM employees
 
 ```
 
-## Avoid pitfalls
+## Performance
+
+### `NOT EXISTS` is faster than `NOT IN` if your column allows `NULL`
+
+`NOT IN` is usually slower than using `NOT EXISTS`, if the values/column you're comparing against allows `NULL`.
+
+I've experienced this when using Snowflake and the PostgreSQL Wiki explicity [calls this out](https://wiki.postgresql.org/wiki/Don't_Do_This#Don.27t_use_NOT_IN):
+
+*"...NOT IN (SELECT ...) does not optimize very well."*
+
+Aside from being slow, using `NOT IN` will not work as intended if there is a `NULL` in the values being compared against - see [tip 11](#be-aware-of-how-not-in-behaves-with-null-values).
+
+Why include this tip if `NOT IN` doesn't work with `NULL` values anyway?
+
+Well just because a column allows `NULL` values does not mean there **are** any `NULL` values present and if you're working with a table that you cannot alter you'll want to use `NOT EXISTS` to speed up your query.
+
+-----
+
+### Implicit casting will slow down (or break) your query
+
+If you specify a value with a different data type than a column's, your database may automatically (implicitly) convert the value.
+
+For example, let's say the `video_id` column has a string data type and you specify an integer in the `WHERE` clause:
+
+```SQL
+SELECT video_name
+FROM video_content 
+ -- Behind the scenes the database will implicitly attempt to convert the video_id column to an integer:
+WHERE video_id = 200050
+```
+
+There's a couple of problems with relying on implicit casting:
+
+1) An error may be thrown if the implicit conversion isn't possible - for example, if one of the video IDs has a string value of _'abc2000'_
+
+2) \*Your query will likely be slower, due to the additional work of converting each value to the specified data type.
+
+Instead, use the same data type as the column you're operating on (`WHERE video_ID = '200050'`) or, to avoid errors, use a function like [`TRY_TO_NUMBER`](https://docs.snowflake.com/en/sql-reference/functions/try_to_decimal) that 
+will attempt the conversion but handle any errors:
+
+```SQL
+SELECT video_name
+FROM video_content 
+ -- This won't result in an error:
+WHERE TRY_TO_NUMBER(video_id) = 200050
+```
+
+\* Note that this depends on the size of the dataset being operated on. 
+
+## Common mistakes
 
 ### Be aware of how `NOT IN` behaves with `NULL` values
 
@@ -540,38 +602,6 @@ FROM products
 My advice - use a unique alias when possible to avoid confusion.
 
 -----
-### Implicit casting will slow down (or break) your query
-
-If you specify a value with a different data type than a column's, your database may automatically (implicitly) convert the value.
-
-For example, let's say the `video_id` column has a string data type and you specify an integer in the `WHERE` clause:
-
-```SQL
-SELECT video_name
-FROM video_content 
- -- Behind the scenes the database will implicitly attempt to convert the video_id column to an integer:
-WHERE video_id = 200050
-```
-
-There's a couple of problems with relying on implicit casting:
-
-1) An error may be thrown if the implicit conversion isn't possible - for example, if one of the video IDs has a string value of _'abc2000'_
-
-2) \*Your query will likely be slower, due to the additional work of converting each value to the specified data type.
-
-Instead, use the same data type as the column you're operating on (`WHERE video_ID = '200050'`) or, to avoid errors, use a function like [`TRY_TO_NUMBER`](https://docs.snowflake.com/en/sql-reference/functions/try_to_decimal) that 
-will attempt the conversion but handle any errors:
-
-```SQL
-SELECT video_name
-FROM video_content 
- -- This won't result in an error:
-WHERE TRY_TO_NUMBER(video_id) = 200050
-```
-
-\* Note that this depends on the size of the dataset being operated on. 
-
------
 ### Always specify which column belongs to which table
 
 When you have complex queries with multiple joins, it pays to be able to 
@@ -592,28 +622,11 @@ FROM video_content AS vc
 ;
 ```
 
------
+## Miscellaneous
+
 ### Understand the order of execution
 If I had to give one piece of advice to someone learning SQL, it'd be to understand the order of 
 execution (of clauses). It will completely change how you write queries. This [blog post](https://blog.jooq.org/a-beginners-guide-to-the-true-order-of-sql-operations/) is a fantastic resource for learning.
-
------
-### Comment your code!
-While in the moment you know why you did something, if you revisit
-the code weeks, months or years later you might not remember.
-- In general you should strive to write comments that explain why you did something, not how.
-- Your colleagues and future self will thank you!
-
-```SQL
-SELECT 
-video_content.*
-FROM video_content
-    LEFT JOIN archive -- New CMS cannot process archive video formats. 
-    ON video_content.video_id = archive.video_id
-WHERE 1=1
-AND archive.video_id IS NULL
-;
-```
 
 -----
 ### Read the documentation (in full)
