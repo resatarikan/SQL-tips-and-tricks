@@ -6,10 +6,10 @@
 
 A (somewhat opinionated) list of SQL tips and tricks that I've picked up over the years.
 
-There's so much you can you do with SQL but I've focused on what I find most useful in my day-to-day work as a data analyst and what 
+There's so much you can do with SQL but I've focused on what I find most useful in my day-to-day work as a data analyst and what 
 I wish I had known when I first started writing SQL.
 
-Please note that some of these tips might not be relevant for all RDBMs.
+Please note that some of these tips might not be relevant for all RDBMSs.
 
 ## Table of contents
 
@@ -32,7 +32,7 @@ Please note that some of these tips might not be relevant for all RDBMs.
 ### Performance
 
 - [`NOT EXISTS` is faster than `NOT IN` if your column allows `NULL`](#not-exists-is-faster-than-not-in-if-your-column-allows-null)
-- [Implicit casting will slow down (or break) your query](#implicit-casting-will-slow-down-or-break-your-query)
+- [Implicit casting will slow down (or break) ](#implicit-casting-will-slow-down-or-break-your-query)
 
 ### Common mistakes
 
@@ -104,7 +104,7 @@ AND dept_no != 5
 ### Indent your code
 Indent your code to make it more readable to colleagues and your future self.
 
-Opinions will vary on what this looks like so be sure to follow your company/team's guidelines or, if that doesn't exist, go with whatever works for you.
+Opinions will vary on what this looks like, so be sure to follow your company/team's guidelines or, if that doesn't exist, go with whatever works for you.
 
 You can also use an online formatter like [poorsql](https://poorsql.com/) or a linter like [sqlfluff](https://github.com/sqlfluff/sqlfluff).
 
@@ -260,7 +260,7 @@ Note that I advise against using `NOT IN` - see [this tip](#be-aware-of-how-not-
 ### Use `QUALIFY` to filter window functions
 
 `QUALIFY` lets you filter the results of a query based on a window function, meaning you don't need
-to use an inline view to filter your result set and thus reducing the number of lines of code needed.
+to use an inline view to filter your result set and thus reducing the number of lines of code.
 
 For example, if I want to return the top 10 markets per product I can use
 `QUALIFY` rather than an inline view:
@@ -372,7 +372,7 @@ WHERE artist_name = 'Miles Davis'
 
 You can also utilise `EXCEPT` with `UNION ALL` to verify whether two tables have the same data.
 
-If no rows are returned the tables are identical - otherwise, what's returned are rows causing the difference:
+If no rows are returned the tables are identical - otherwise, what's returned are the rows causing the difference:
 
 ```SQL
 /* 
@@ -385,7 +385,7 @@ department that aren't present in employees.
 
 The UNION ALL will ensure that the
 final result set returned combines
-these all of these rows so you know
+all of these rows so you know
 which rows are causing the difference.
 */
 (
@@ -421,7 +421,7 @@ FROM employees
 
 `NOT IN` is usually slower than using `NOT EXISTS`, if the values/column you're comparing against allows `NULL`.
 
-I've experienced this when using Snowflake and the PostgreSQL Wiki explicity [calls this out](https://wiki.postgresql.org/wiki/Don't_Do_This#Don.27t_use_NOT_IN):
+I've experienced this when using Snowflake and the PostgreSQL Wiki explicitly [calls this out](https://wiki.postgresql.org/wiki/Don't_Do_This#Don.27t_use_NOT_IN):
 
 *"...NOT IN (SELECT ...) does not optimize very well."*
 
@@ -450,7 +450,7 @@ There's a couple of problems with relying on implicit casting:
 
 1) An error may be thrown if the implicit conversion isn't possible - for example, if one of the video IDs has a string value of _'abc2000'_
 
-2) \*Your query will likely be slower, due to the additional work of converting each value to the specified data type.
+2) \*Your query may be slower, due to the additional work of converting each value to the specified data type.
 
 Instead, use the same data type as the column you're operating on (`WHERE video_ID = '200050'`) or, to avoid errors, use a function like [`TRY_TO_NUMBER`](https://docs.snowflake.com/en/sql-reference/functions/try_to_decimal) that 
 will attempt the conversion but handle any errors:
@@ -581,7 +581,7 @@ Our earlier solutions apply:
 
 ```SQL
 /*
-Solution option 1 (note this might not work in all RDBMS, in which case use the other soluton):
+Solution option 1 (note this might not work in all RDBMS, in which case use the other solution):
 */
 SELECT 
 product
