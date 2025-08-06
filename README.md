@@ -563,7 +563,7 @@ Result:
 
 Assigning an alias to a calculated field can also be problematic when it comes to window functions.
 
-In this example the the `CASE` statement is being applied AFTER the window function has executed:
+In this example the `CASE` statement is being applied AFTER the window function has executed:
 
 ```SQL
 /*
