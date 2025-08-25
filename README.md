@@ -20,7 +20,7 @@ Please note that some of these tips might not be relevant for all RDBMSs.
 - [Indent your code](#indent-your-code)
 - [Consider CTEs when writing complex queries](#consider-ctes-when-writing-complex-queries)
 - [Comment your code](#comment-your-code)
-
+- [Simplify joins with USING](#simplify-joins-with-using)
 
 ### Data wrangling
 - [Anti-joins will return rows from one table that have no match in another table](#anti-joins-will-return-rows-from-one-table-that-have-no-match-in-another-table)
@@ -211,6 +211,38 @@ WHERE 1=1
 -- Need to filter out as new CMS cannot process archive video formats:
 AND archive.video_id IS NULL
 ;
+```
+
+-----
+### Simplify joins with `USING`
+
+If you're joining using a column with the same name in two tables you can use `USING` to
+simplify your join:
+
+```SQL
+-- USING:
+SELECT * 
+FROM album 
+	INNER JOIN artist 
+	USING (artistid)
+
+-- Traditional ON clause:
+SELECT * 
+FROM album 
+	INNER JOIN artist 
+	ON album.artistid = artist.ArtistId 
+```
+
+The other benefit of `USING` is that the column in common between the two tables is deduplicated, with only one column returned in the result set.
+
+This means that there is no ambiguity, unlike the following query which would throw a `ambiguous column name` error as the database would not be sure
+which column to which you are referring if you are using the `ON` clause:
+
+```SQL
+SELECT ArtistId -- Which table column?
+FROM album
+	INNER JOIN artist 
+	ON album.artistid = artist.ArtistId
 ```
 
 ## Data wrangling
