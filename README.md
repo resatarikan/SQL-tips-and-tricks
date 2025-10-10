@@ -136,7 +136,7 @@ For longer than I'd care to admit I would nest inline views, which would lead to
 queries that were hard to understand, particularly if revisited after a few weeks.
 
 If you find yourself nesting inline views more than 2 or 3 levels deep, 
-consider using common table expressions, which can help you keep your code more organised and readable.
+consider using common table expressions, which keep your code more organised and readable and supports reusability and debugging.
 
 ```SQL
 -- Using inline views:
